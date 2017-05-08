@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
+<!-- (Based on vQmod XML Generator by UKSB - http://www.opencart-extensions.co.uk) //-->
+<modification>
+	<id><![CDATA[Superfaktúra]]></id>
+	<version><![CDATA[1.2]]></version>
+	<vqmver required="true"><![CDATA[2.4.0]]></vqmver>
+	<author><![CDATA[Magic Stores s.r.o. (Michal Urva)]]></author>
+	<file path="admin/" name="controller/setting/setting.php" error="abort">
+		<operation error="abort" info="">
+			<search position="before"><![CDATA[$this->template = 'setting/setting.tpl';]]></search>
+			<add><![CDATA[// Superfaktura
+if (isset($this->request->post['config_sf_email'])) {
+	$this->data['config_sf_email'] = $this->request->post['config_sf_email']; 
+} else {
+	$this->data['config_sf_email'] = $this->config->get('config_sf_email');
+}
+
+if (isset($this->request->post['config_sf_api'])) {
+	$this->data['config_sf_api'] = $this->request->post['config_sf_api']; 
+} else {
+	$this->data['config_sf_api'] = $this->config->get('config_sf_api');
+}
+
+if (isset($this->request->post['config_sf_dph'])) {
+	$this->data['config_sf_dph'] = $this->request->post['config_sf_dph']; 
+} else {
+	$this->data['config_sf_dph'] = $this->config->get('config_sf_dph');
+}
+if (isset($this->request->post['config_sf_regular'])) {
+	$this->data['config_sf_regular'] = $this->request->post['config_sf_regular']; 
+} else {
+	$this->data['config_sf_regular'] = $this->config->get('config_sf_regular');
+}
+if (isset($this->request->post['config_sf_proforma'])) {
+	$this->data['config_sf_proforma'] = $this->request->post['config_sf_proforma']; 
+} else {
+	$this->data['config_sf_proforma'] = $this->config->get('config_sf_proforma');
+}
+if (isset($this->request->post['config_sf_variabile'])) {
+	$this->data['config_sf_variabile'] = $this->request->post['config_sf_variabile']; 
+} else {
+	$this->data['config_sf_variabile'] = $this->config->get('config_sf_variabile');
+}
+//]]></add>
+		</operation>
+	</file>
+	<file path="admin/" name="view/template/setting/setting.tpl" error="abort">
+		<operation error="abort" info="">
+			<search position="before"><![CDATA[</form>]]></search>
+			<add><![CDATA[<div id="tab-superfaktura" style="display: none;">
+	<h2>Nastavenia</h2>
+		<table class="form">
+        	<tr>
+            	<td><span class="required">*</span>E-mail</td>
+            	<td><input type="text" size="40" name="config_sf_email" value="<?php echo $config_sf_email; ?>" maxlength="100" /></td>
+            </tr>
+            <tr>
+	            <td><span class="required">*</span>Váš API klúč je:</td>
+    	        <td><input type="text" size="40" name="config_sf_api" value="<?php echo $config_sf_api ?>" maxlength="100"/></td>
+            </tr>
+			<tr>
+	            <td><span class="required">*</span>Platca DPH:</td>
+    	        <td><select name="config_sf_dph">
+				<?php if ($config_sf_dph) { ?>
+				<option value="1" selected="selected">Áno</option>
+				<option value="0">Nie</option>  
+				<?php } else { ?>
+				<option value="1">Áno</option>
+				<option value="0" selected="selected">Nie</option>
+				<?php } ?>
+				</select></td>
+            </tr>
+			<?php 
+			if ($config_sf_api) { 
+			
+			require_once('SFAPIclient/SFAPIclient.php');
+
+			$api = new SFAPIclient($config_sf_email, $config_sf_api);
+
+			$ciselniky = $api->getSequences(); 
+  			$regular = $ciselniky->regular;
+  			$proforma = $ciselniky->proforma;
+  			?>
+			
+			<tr>
+			<td><span class="required">*</span>Číselník FAKTÚRY:</td>
+			<td><select name="config_sf_regular">
+  			<?php 
+			if ($config_sf_regular) {
+			$udaje = explode("*-*", $config_sf_regular);
+			$idreg = $udaje[0];
+			$maskreg = $udaje[1];
+			?>
+			<option value="<?php echo $idreg; ?>*-*<?php echo $maskreg; ?>" selected="selected">Používa sa: <?php echo $maskreg; ?></option>
+			<?php
+			} else {
+			?>
+			<option value="" selected="selected">Prosím vyberte...</option>
+			<?php			  
+			}  
+    		foreach ($regular as $entry) {
+      			$regarr[] = $entry->mask . ";" . $entry->id;
+			 ?> <option value="<?php echo $entry->id; ?>*-*<?php echo $entry->mask; ?>"><?php echo $entry->mask; ?></option> <?php
+			  
+    		} ?>
+			</select></td>
+			</tr>
+  			
+			<tr>
+			<td><span class="required">*</span>Číselník PROFORMA:</td>
+			<td><select name="config_sf_proforma">
+			<?php 
+			if ($config_sf_proforma) {
+			$udaje = explode("*-*", $config_sf_proforma);
+			$idpro = $udaje[0];
+			$maskpro = $udaje[1];
+			?>
+			<option value="<?php echo $idpro; ?>*-*<?php echo $maskpro; ?>" selected="selected">Používa sa: <?php echo $maskpro; ?></option>
+			<?php
+			} else {
+			?>
+			<option value="" selected="selected">Prosím vyberte...</option>
+			<?php			  
+			}  
+    		foreach ($proforma as $entry) {
+      			$proarr[] = $entry->mask . ";" . $entry->id;
+			 ?> <option value="<?php echo $entry->id; ?>*-*<?php echo $entry->mask; ?>"><?php echo $entry->mask; ?></option> <?php
+    		}
+			}  
+			?>
+			</select></td>
+			</tr>
+			  
+			<tr>
+			<td><span class="required">*</span>Variabilný symbol:</td>
+			<td><select name="config_sf_variabile">
+  			<?php 
+			if ($config_sf_variabile) { ?>
+			  <option value="<?php echo $config_sf_variabile; ?>" selected="selected">Používa sa: <?php if ($config_sf_variabile == 'invoice') {echo "ČÍSLO FAKTÚRY";} else {echo "ČÍSLO OBJEDNÁVKY";} ?></option>
+			<?php
+			} else {
+			?>
+			<option value="" selected="selected">Prosím vyberte...</option>
+			<?php	} ?> 
+      		<option value="order">ČÍSLO OBJEDNÁVKY</option>
+      		<option value="invoice">ČÍSLO FAKTÚRY</option>			     	
+			</select></td>
+			</tr>
+
+			  
+        </table>
+		<p style="color: red;"><b>Ak potrebujete úpravu OpenCart-u namieru, tak nás neváhajte osloviť na <a href="mailto:magicstoressro@gmail.com">magicstoressro@gmail.com</a></b></p>
+		<p>© 2014 <a href="http://www.magicfashion.sk">Magic Stores s.r.o.</a> (Inšpirované prácou <a href="http://www.mihalko.eu">Adriána Mihálka</a>)</p>
+</div>        ]]></add>
+		</operation>
+		<operation error="abort" info="">
+			<search position="iafter"><![CDATA[<?php echo $tab_server; ?></a>]]></search>
+			<add><![CDATA[<a href="#tab-superfaktura">SuperFaktúra</a>]]></add>
+		</operation>
+	</file>
+	<file path="admin/" name="controller/sale/order.php" error="abort">
+		<operation error="abort" info="">
+			<search position="before"><![CDATA[public function invoice()]]></search>
+			<add><![CDATA[public function superfaktura() {
+
+		$this->load->model('sale/order');
+		$this->load->model('setting/setting');
+  		require_once(DIR_APPLICATION . 'SFAPIclient/SFAPIclient.php');
+		$api = new SFAPIclient($this->config->get('config_sf_email'), $this->config->get('config_sf_api'));
+
+		$order_id = $this->request->get['order_id'];
+		
+			$order_info = $this->model_sale_order->getOrder($order_id);
+			
+  
+			if ($order_info) {
+				$store_info = $this->model_setting_setting->getSetting('config', $order_info['store_id']);
+				
+				$product_data = array();
+
+				$products = $this->model_sale_order->getOrderProducts($order_id);
+
+				foreach ($products as $product) {
+					$option_data = NULL;
+
+					$options = $this->model_sale_order->getOrderOptions($order_id, $product['order_product_id']);
+
+					foreach ($options as $option) {
+						if ($option['type'] != 'file') {
+							$option_data .= $option['name'] . ': ' . $option['value'] . ' ';
+						}
+														
+					}
+			
+			if ($this->config->get('config_sf_dph')) {	
+        		$product_data = array(
+						'name'     => $product['name'],
+						'description'  => $option_data . '(Model:' . $product['model'] . ')',
+						'quantity' => $product['quantity'],
+						'unit'        => 'ks.',
+						'unit_price'    => $product['price'],
+						'tax'         => 20
+				);
+			} else {
+				$product_data = array(
+						'name'     => $product['name'],
+						'description'  => $option_data . '(Model:' . $product['model'] . ')',
+						'quantity' => $product['quantity'],
+						'unit'        => 'ks.',
+						'unit_price'    => $product['price']
+				);
+			}
+				$api->addItem($product_data);
+        }
+        
+        $total_data = $this->model_sale_order->getOrderTotals($order_id);
+	}
+		
+
+    if (isset($this->request->get['type'])) {
+			if ($this->request->get['type'] == 'regular') 
+			{ $cucaj = explode("*-*", $this->config->get('config_sf_regular')); $sequence_id = $cucaj[0]; } 
+	  		else
+			{ $cucaj = explode("*-*", $this->config->get('config_sf_proforma')); $sequence_id = $cucaj[0]; } 
+	  		
+	  		if ($this->config->get('config_sf_variabile') == 'order') {
+        $api->setInvoice(array(
+				'type' =>  $this->request->get['type'],
+			  	'variable' => $order_id,
+			  	'sequence_id' => $sequence_id
+			   ));
+         }
+         else
+         {
+        $api->setInvoice(array(
+				'type' =>  $this->request->get['type'],
+			  	'sequence_id' => $sequence_id
+			   ));         
+         }
+         
+        $api->setInvoice(array(
+				'header_comment' =>  "Objednávka číslo: $order_id"
+			   ));
+         
+		}
+		if ($order_info['payment_country_id'] == 189 ) {
+			$sf_country_id = 191;
+		} elseif ($order_info['payment_country_id'] == 56 ) {
+			$sf_country_id = 57;
+		}
+		else {
+			$sf_getcountry = get_object_vars($api->getCountries());
+			$sf_country_id = array_search($order_info['payment_country'], $sf_getcountry);
+		}	
+  
+		$api->setClient(array(
+		'name'    => $order_info['payment_firstname'] .' '. $order_info['payment_lastname'],
+		'email'   => $order_info['email'],
+		'address' => $order_info['payment_address_1'],
+		'city'    => $order_info['payment_city'],
+		'zip'     => $order_info['payment_postcode'],
+		'country'     => $order_info['payment_country'],
+		'country_id'     =>  $sf_country_id, 
+		'phone'   => $order_info['telephone'],
+		'ico'   => $order_info['payment_company_id'],
+		'ic_dph'   => $order_info['payment_tax_id'],
+		));
+
+		$payment_name = $order_info['payment_firstname'] .' '. $order_info['payment_lastname'];
+  		$shipping_name = $order_info['shipping_firstname'] .' '. $order_info['shipping_lastname'];
+  
+  		$payment_address = $order_info['payment_address_1'];
+		$shipping_address = $order_info['shipping_address_1'];
+  
+  		if ( !($payment_name == $shipping_name ) || !($payment_address == $shipping_address ) ){
+		
+		if ($order_info['shipping_country_id'] == 189 ) {
+			$sf_country_sh_id = 191;
+		} elseif ($order_info['shipping_country_id'] == 56 ) {
+			$sf_country_sh_id = 57;
+		}
+		else {
+			$sf_getcountry_sh = get_object_vars($api->getCountries());
+			$sf_country_sh_id = array_search($order_info['shipping_country'], $sf_getcountry_sh);
+		}
+		
+		$api->setClient(array(
+		'delivery_name'    => $order_info['shipping_firstname'] .' '. $order_info['shipping_lastname'],
+		'delivery_address' => $order_info['shipping_address_1'],
+		'delivery_city'    => $order_info['shipping_city'],
+		'delivery_country'     => $order_info['shipping_country'],
+		'delivery_country_id'     => $sf_country_sh_id,
+		'delivery_zip'     => $order_info['shipping_postcode'],
+		));
+		}
+    
+    foreach($total_data as $arrays){
+    
+    if ($this->config->get('config_sf_dph')) {	
+     if($arrays['code']=='shipping'){
+		  $api->addItem(array(
+ 				'name' => $arrays['title'],
+ 				'quantity' => 1,
+ 				'unit' => 'ks',
+ 				'unit_price' => $arrays['value'],
+        'tax' => 20
+ 			));
+ 		}
+		} else {	
+ 		if($arrays['code']=='shipping'){
+		  $api->addItem(array(
+ 				'name' => $arrays['title'],
+ 				'quantity' => 1,
+ 				'unit' => 'ks',
+ 				'unit_price' => $arrays['value']
+ 			));
+ 		}
+    }
+    
+    if ($this->config->get('config_sf_dph')) {	
+     if($arrays['code']=='coupon'){
+		  $api->addItem(array(
+ 				'name' => $arrays['title'],
+ 				'quantity' => 1,
+ 				'unit' => 'ks',
+ 				'unit_price' => $arrays['value'],
+        'tax' => 20
+ 			));
+ 		}
+		} else {	
+ 		if($arrays['code']=='coupon'){
+		  $api->addItem(array(
+ 				'name' => $arrays['title'],
+ 				'quantity' => 1,
+ 				'unit' => 'ks',
+ 				'unit_price' => $arrays['value']
+ 			));
+ 		}
+    }   
+	  
+	  if($arrays['code']=='xfee1'){		
+	  $api->addItem(array(
+ 				'name' => $arrays['title'],
+ 				'quantity' => 1,
+ 				'unit' => 'ks',
+ 				'unit_price' => $arrays['value']
+ 			));
+ 		}
+		}
+    
+    $response = $api->save();
+	$json = array();
+    
+    if($response->error === 0){
+		$sf_token = $response->data->Invoice->token;
+		$sf_invoice_id = $response->data->InvoiceItem[0]->invoice_id;
+		//$api->getPDF($sf_invoice_id, $sf_token);
+	  	$this->model_sale_order->createSuperFakturaInvoiceNo($order_id,$sf_invoice_id);
+	  	$json['response'] = 'Faktúra vytvorená! <a href="https://moja.superfaktura.sk/invoices/view/' . $sf_invoice_id . '" target = "_blank">Otvoriť</a>';
+    } else {
+		//error descriptions
+		$json['error'] = $response->error_message;
+	}
+	
+  $this->response->setOutput(json_encode($json));
+}]]></add>
+		</operation>
+		<operation error="abort" info="">
+			<search position="replace"><![CDATA[$this->data['invoice_no'] = $order_info['invoice_prefix'] . $order_info['invoice_no'];]]></search>
+			<add><![CDATA[$this->data['invoice_no'] = $order_info['invoice_no'];]]></add>
+		</operation>
+	</file>
+	<file path="admin/" name="view/template/sale/order_info.tpl" error="abort">
+		<operation error="abort" info="">
+			<search position="before"><![CDATA[$('#credit-add').live('click', function() {]]></search>
+			<add><![CDATA[$('#faktura-generate, #proforma-generate').live('click', function() {
+  var that = this,
+      type = $(this).attr('rel');
+  $.ajax({
+    url: 'index.php?route=sale/order/superfaktura&token=<?php echo $token; ?>&order_id=<?php echo $order_id; ?>&type='+type,
+    dataType: 'json',
+    beforeSend: function() {
+      $('#invoice').html('<img src="view/image/loading.gif" class="loading" style="padding-left: 5px;" />'); 
+    },
+    success: function(json) {
+      $('.success, .warning').remove();
+            
+      if (json['error']) {        
+        $('#invoice').html('CHYBA: '+json.error);
+      }
+      
+      if (json.response) {
+        $('#invoice').html(json.response);       
+      }
+    }
+  });
+});]]></add>
+		</operation>
+		<operation error="abort" info="">
+			<search position="replace" offset="5"><![CDATA[<td><?php echo $text_invoice_no; ?></td>]]></search>
+			<add trim="true"><![CDATA[<td><?php echo $text_invoice_no; ?></td>
+<td><?php if ($invoice_no) { ?>
+<?php echo '<a href="https://moja.superfaktura.sk/invoices/view/' . $invoice_no . '" target = "_blank">Otvoriť na SuperFaktúre</a>'; ?>
+<?php } else { ?>
+<span id="invoice">Vytvoriť: [<a id="faktura-generate" rel="regular">Faktúra</a>] alebo [<a id="proforma-generate" rel="proforma">Zálohová faktúra</a>]</span>
+<?php } ?></td>]]></add>
+		</operation>
+		<operation error="abort" info="">
+			<search position="replace"><![CDATA[<a href="<?php echo $invoice; ?>" target="_blank" class="button"><?php echo $button_invoice; ?></a>]]></search>
+			<add><![CDATA[]]></add>
+		</operation>
+	</file>
+	<file path="admin/" name="model/sale/order.php" error="abort">
+		<operation error="abort" info="">
+			<search position="before"><![CDATA[public function createInvoiceNo($order_id)]]></search>
+			<add><![CDATA[public function createSuperFakturaInvoiceNo($order_id, $generated_invoice) {
+		$order_info = $this->getOrder($order_id);
+			
+		if ($order_info && !$order_info['invoice_no']) {
+		
+			//$this->db->query("UPDATE `" . DB_PREFIX . "order` SET invoice_prefix = '" . $this->db->escape($generated_invoice) . "' WHERE order_id = '" . (int)$order_id . "'");
+		  	$this->db->query("UPDATE `" . DB_PREFIX . "order` SET invoice_no = '" . (int)$generated_invoice . "', invoice_prefix = 'SUPERFAKTURA' WHERE order_id = '" . (int)$order_id . "'");
+			
+			//return $order_info['invoice_prefix'] . $invoice_no;
+		}
+}  ]]></add>
+		</operation>
+	</file>
+	<file path="admin/" name="view/template/sale/order_list.tpl">
+		<operation error="abort" info="">
+			<search position="replace"><![CDATA[<a onclick="$('#form').attr('action', '<?php echo $invoice; ?>'); $('#form').attr('target', '_blank'); $('#form').submit();" class="button"><?php echo $button_invoice; ?>]]></search>
+			<add><![CDATA[]]></add>
+		</operation>
+	</file>
+</modification>
